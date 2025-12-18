@@ -29,7 +29,7 @@ const App = () => (
             {/* Public route */}
             <Route path="/auth" element={<Auth />} />
             
-            {/* Protected routes */}
+            {/* Protected routes - All authenticated users */}
             <Route element={<ProtectedRoute />}>
               <Route element={<AppLayout />}>
                 <Route path="/" element={<Dashboard />} />
@@ -37,8 +37,14 @@ const App = () => (
                 <Route path="/campaigns" element={<Campaigns />} />
                 <Route path="/contacts" element={<Contacts />} />
                 <Route path="/calendar" element={<Calendar />} />
-                <Route path="/analytics" element={<Analytics />} />
                 <Route path="/settings" element={<Settings />} />
+              </Route>
+            </Route>
+
+            {/* Analytics - managers and above */}
+            <Route element={<ProtectedRoute allowedRoles={['super_admin', 'admin', 'manager']} />}>
+              <Route element={<AppLayout />}>
+                <Route path="/analytics" element={<Analytics />} />
               </Route>
             </Route>
             
