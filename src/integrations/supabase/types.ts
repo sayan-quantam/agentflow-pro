@@ -14,6 +14,601 @@ export type Database = {
   }
   public: {
     Tables: {
+      agent_templates: {
+        Row: {
+          created_at: string
+          description: string | null
+          greeting_message: string | null
+          id: string
+          industry: string | null
+          is_public: boolean | null
+          name: string
+          organization_id: string | null
+          settings: Json | null
+          system_prompt: string | null
+          type: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          greeting_message?: string | null
+          id?: string
+          industry?: string | null
+          is_public?: boolean | null
+          name: string
+          organization_id?: string | null
+          settings?: Json | null
+          system_prompt?: string | null
+          type: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          greeting_message?: string | null
+          id?: string
+          industry?: string | null
+          is_public?: boolean | null
+          name?: string
+          organization_id?: string | null
+          settings?: Json | null
+          system_prompt?: string | null
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_templates_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_agents: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          greeting_message: string | null
+          id: string
+          language: string | null
+          name: string
+          organization_id: string
+          settings: Json | null
+          status: string
+          success_rate: number | null
+          system_prompt: string | null
+          total_calls: number | null
+          type: string
+          updated_at: string
+          voice: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          greeting_message?: string | null
+          id?: string
+          language?: string | null
+          name: string
+          organization_id: string
+          settings?: Json | null
+          status?: string
+          success_rate?: number | null
+          system_prompt?: string | null
+          total_calls?: number | null
+          type: string
+          updated_at?: string
+          voice?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          greeting_message?: string | null
+          id?: string
+          language?: string | null
+          name?: string
+          organization_id?: string
+          settings?: Json | null
+          status?: string
+          success_rate?: number | null
+          system_prompt?: string | null
+          total_calls?: number | null
+          type?: string
+          updated_at?: string
+          voice?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_agents_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      calendar_events: {
+        Row: {
+          agent_id: string | null
+          all_day: boolean | null
+          campaign_id: string | null
+          contact_id: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          end_time: string
+          id: string
+          organization_id: string
+          start_time: string
+          title: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          agent_id?: string | null
+          all_day?: boolean | null
+          campaign_id?: string | null
+          contact_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          end_time: string
+          id?: string
+          organization_id: string
+          start_time: string
+          title: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          agent_id?: string | null
+          all_day?: boolean | null
+          campaign_id?: string | null
+          contact_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          end_time?: string
+          id?: string
+          organization_id?: string
+          start_time?: string
+          title?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calendar_events_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "ai_agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "calendar_events_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "calendar_events_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "calendar_events_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      call_logs: {
+        Row: {
+          agent_id: string | null
+          campaign_id: string | null
+          contact_id: string | null
+          created_at: string
+          direction: string
+          duration_seconds: number | null
+          ended_at: string | null
+          from_number: string | null
+          id: string
+          metadata: Json | null
+          organization_id: string
+          outcome: string | null
+          recording_url: string | null
+          sentiment: string | null
+          started_at: string
+          status: string
+          to_number: string | null
+          transcript: string | null
+        }
+        Insert: {
+          agent_id?: string | null
+          campaign_id?: string | null
+          contact_id?: string | null
+          created_at?: string
+          direction: string
+          duration_seconds?: number | null
+          ended_at?: string | null
+          from_number?: string | null
+          id?: string
+          metadata?: Json | null
+          organization_id: string
+          outcome?: string | null
+          recording_url?: string | null
+          sentiment?: string | null
+          started_at?: string
+          status: string
+          to_number?: string | null
+          transcript?: string | null
+        }
+        Update: {
+          agent_id?: string | null
+          campaign_id?: string | null
+          contact_id?: string | null
+          created_at?: string
+          direction?: string
+          duration_seconds?: number | null
+          ended_at?: string | null
+          from_number?: string | null
+          id?: string
+          metadata?: Json | null
+          organization_id?: string
+          outcome?: string | null
+          recording_url?: string | null
+          sentiment?: string | null
+          started_at?: string
+          status?: string
+          to_number?: string | null
+          transcript?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "call_logs_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "ai_agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "call_logs_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "call_logs_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "call_logs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      campaign_contacts: {
+        Row: {
+          attempts: number | null
+          campaign_id: string
+          completed_at: string | null
+          contact_id: string
+          created_at: string
+          id: string
+          last_attempt_at: string | null
+          result: Json | null
+          scheduled_at: string | null
+          status: string
+        }
+        Insert: {
+          attempts?: number | null
+          campaign_id: string
+          completed_at?: string | null
+          contact_id: string
+          created_at?: string
+          id?: string
+          last_attempt_at?: string | null
+          result?: Json | null
+          scheduled_at?: string | null
+          status?: string
+        }
+        Update: {
+          attempts?: number | null
+          campaign_id?: string
+          completed_at?: string | null
+          contact_id?: string
+          created_at?: string
+          id?: string
+          last_attempt_at?: string | null
+          result?: Json | null
+          scheduled_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_contacts_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaign_contacts_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      campaigns: {
+        Row: {
+          agent_id: string | null
+          contact_list_id: string | null
+          contacted: number | null
+          created_at: string
+          created_by: string | null
+          daily_end_time: string | null
+          daily_start_time: string | null
+          description: string | null
+          failed: number | null
+          id: string
+          name: string
+          organization_id: string
+          schedule_end: string | null
+          schedule_start: string | null
+          settings: Json | null
+          status: string
+          successful: number | null
+          timezone: string | null
+          total_contacts: number | null
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          agent_id?: string | null
+          contact_list_id?: string | null
+          contacted?: number | null
+          created_at?: string
+          created_by?: string | null
+          daily_end_time?: string | null
+          daily_start_time?: string | null
+          description?: string | null
+          failed?: number | null
+          id?: string
+          name: string
+          organization_id: string
+          schedule_end?: string | null
+          schedule_start?: string | null
+          settings?: Json | null
+          status?: string
+          successful?: number | null
+          timezone?: string | null
+          total_contacts?: number | null
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          agent_id?: string | null
+          contact_list_id?: string | null
+          contacted?: number | null
+          created_at?: string
+          created_by?: string | null
+          daily_end_time?: string | null
+          daily_start_time?: string | null
+          description?: string | null
+          failed?: number | null
+          id?: string
+          name?: string
+          organization_id?: string
+          schedule_end?: string | null
+          schedule_start?: string | null
+          settings?: Json | null
+          status?: string
+          successful?: number | null
+          timezone?: string | null
+          total_contacts?: number | null
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaigns_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "ai_agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaigns_contact_list_id_fkey"
+            columns: ["contact_list_id"]
+            isOneToOne: false
+            referencedRelation: "contact_lists"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaigns_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contact_list_members: {
+        Row: {
+          added_at: string
+          contact_id: string
+          contact_list_id: string
+        }
+        Insert: {
+          added_at?: string
+          contact_id: string
+          contact_list_id: string
+        }
+        Update: {
+          added_at?: string
+          contact_id?: string
+          contact_list_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contact_list_members_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contact_list_members_contact_list_id_fkey"
+            columns: ["contact_list_id"]
+            isOneToOne: false
+            referencedRelation: "contact_lists"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contact_lists: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          name: string
+          organization_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          organization_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          organization_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contact_lists_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contact_tags: {
+        Row: {
+          contact_id: string
+          tag_id: string
+        }
+        Insert: {
+          contact_id: string
+          tag_id: string
+        }
+        Update: {
+          contact_id?: string
+          tag_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contact_tags_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contact_tags_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "tags"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contacts: {
+        Row: {
+          company: string | null
+          created_at: string
+          created_by: string | null
+          custom_fields: Json | null
+          email: string | null
+          id: string
+          last_contacted_at: string | null
+          name: string
+          notes: string | null
+          organization_id: string
+          phone: string | null
+          source: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          company?: string | null
+          created_at?: string
+          created_by?: string | null
+          custom_fields?: Json | null
+          email?: string | null
+          id?: string
+          last_contacted_at?: string | null
+          name: string
+          notes?: string | null
+          organization_id: string
+          phone?: string | null
+          source?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          company?: string | null
+          created_at?: string
+          created_by?: string | null
+          custom_fields?: Json | null
+          email?: string | null
+          id?: string
+          last_contacted_at?: string | null
+          name?: string
+          notes?: string | null
+          organization_id?: string
+          phone?: string | null
+          source?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contacts_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organization_invites: {
         Row: {
           accepted_at: string | null
@@ -128,6 +723,38 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "profiles_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tags: {
+        Row: {
+          color: string | null
+          created_at: string
+          id: string
+          name: string
+          organization_id: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          organization_id: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          organization_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tags_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
