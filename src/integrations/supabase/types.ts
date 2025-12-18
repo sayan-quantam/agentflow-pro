@@ -180,6 +180,17 @@ export type Database = {
           role: Database["public"]["Enums"]["app_role"]
         }[]
       }
+      get_organization_members: {
+        Args: never
+        Returns: {
+          avatar_url: string
+          created_at: string
+          email: string
+          full_name: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }[]
+      }
       get_user_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
@@ -188,6 +199,17 @@ export type Database = {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
+        }
+        Returns: boolean
+      }
+      remove_organization_member: {
+        Args: { target_user_id: string }
+        Returns: boolean
+      }
+      update_member_role: {
+        Args: {
+          new_role: Database["public"]["Enums"]["app_role"]
+          target_user_id: string
         }
         Returns: boolean
       }

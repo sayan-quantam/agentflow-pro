@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
+import { Database } from '@/integrations/supabase/types';
+
+type AppRole = Database['public']['Enums']['app_role'];
 
 interface Organization {
   id: string;
@@ -14,10 +17,19 @@ interface Organization {
 interface OrganizationInvite {
   id: string;
   email: string;
-  role: 'super_admin' | 'admin' | 'manager' | 'agent';
+  role: AppRole;
   token: string;
   expires_at: string;
   accepted_at: string | null;
+  created_at: string;
+}
+
+export interface OrganizationMember {
+  user_id: string;
+  full_name: string | null;
+  email: string | null;
+  avatar_url: string | null;
+  role: AppRole;
   created_at: string;
 }
 
@@ -132,6 +144,34 @@ export function useOrganization() {
     return data;
   };
 
+  const fetchMembers = async (): Promise<OrganizationMember[]> => {
+    const { data, error } = await supabase.rpc('get_organization_members');
+
+    if (error) {
+      console.error('Error fetching members:', error);
+      return [];
+    }
+
+    return (data as OrganizationMember[]) || [];
+  };
+
+  const updateMemberRole = async (targetUserId: string, newRole: AppRole) => {
+    const { error } = await supabase.rpc('update_member_role', {
+      target_user_id: targetUserId,
+      new_role: newRole,
+    });
+
+    if (error) throw error;
+  };
+
+  const removeMember = async (targetUserId: string) => {
+    const { error } = await supabase.rpc('remove_organization_member', {
+      target_user_id: targetUserId,
+    });
+
+    if (error) throw error;
+  };
+
   return {
     organization,
     loading,
@@ -140,5 +180,8 @@ export function useOrganization() {
     createInvite,
     deleteInvite,
     updateOrganization,
+    fetchMembers,
+    updateMemberRole,
+    removeMember,
   };
 }
