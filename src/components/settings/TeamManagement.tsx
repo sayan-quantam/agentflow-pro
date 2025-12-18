@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ChevronRight, UserPlus, Loader2, Copy, Trash2, Mail } from "lucide-react";
+import { UserPlus, Loader2, Copy, Trash2, Mail, MoreHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,9 +19,30 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useOrganization } from "@/hooks/useOrganization";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useOrganization, OrganizationMember } from "@/hooks/useOrganization";
+import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { z } from "zod";
+import { Database } from "@/integrations/supabase/types";
+
+type AppRole = Database['public']['Enums']['app_role'];
 
 const emailSchema = z.string().email("Please enter a valid email");
 
@@ -35,22 +56,33 @@ interface Invite {
   created_at: string;
 }
 
-// Mock team members - in real app, fetch from profiles table
-const teamMembers = [
-  { id: 1, name: "John Doe", email: "john@company.com", role: "Super Admin", status: "active" },
-];
+const roleLabels: Record<AppRole, string> = {
+  super_admin: "Super Admin",
+  admin: "Admin",
+  manager: "Manager",
+  agent: "Agent",
+};
 
 export function TeamManagement() {
-  const { organization, createInvite, fetchInvites, deleteInvite } = useOrganization();
+  const { organization, createInvite, fetchInvites, deleteInvite, fetchMembers, updateMemberRole, removeMember } = useOrganization();
+  const { user, role: currentUserRole } = useAuth();
   const [invites, setInvites] = useState<Invite[]>([]);
+  const [members, setMembers] = useState<OrganizationMember[]>([]);
   const [loading, setLoading] = useState(false);
+  const [membersLoading, setMembersLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState<"admin" | "manager" | "agent">("agent");
   const [emailError, setEmailError] = useState("");
+  const [memberToRemove, setMemberToRemove] = useState<OrganizationMember | null>(null);
+
+  const isSuperAdmin = currentUserRole === 'super_admin';
 
   useEffect(() => {
-    loadInvites();
+    if (organization) {
+      loadInvites();
+      loadMembers();
+    }
   }, [organization]);
 
   const loadInvites = async () => {
@@ -58,8 +90,17 @@ export function TeamManagement() {
     setInvites(data);
   };
 
+  const loadMembers = async () => {
+    setMembersLoading(true);
+    try {
+      const data = await fetchMembers();
+      setMembers(data);
+    } finally {
+      setMembersLoading(false);
+    }
+  };
+
   const handleInvite = async () => {
-    // Validate email
     const result = emailSchema.safeParse(inviteEmail);
     if (!result.success) {
       setEmailError(result.error.errors[0].message);
@@ -70,13 +111,8 @@ export function TeamManagement() {
     setLoading(true);
     try {
       const invite = await createInvite(inviteEmail, inviteRole);
-      
-      // Generate invite link
       const inviteLink = `${window.location.origin}/invite?token=${invite.token}`;
-      
-      // Copy to clipboard
       await navigator.clipboard.writeText(inviteLink);
-      
       toast.success("Invite created! Link copied to clipboard.");
       setDialogOpen(false);
       setInviteEmail("");
@@ -106,7 +142,36 @@ export function TeamManagement() {
     }
   };
 
+  const handleRoleChange = async (member: OrganizationMember, newRole: AppRole) => {
+    try {
+      await updateMemberRole(member.user_id, newRole);
+      toast.success(`Role updated to ${roleLabels[newRole]}`);
+      loadMembers();
+    } catch (error: any) {
+      toast.error(error.message || "Failed to update role");
+    }
+  };
+
+  const handleRemoveMember = async () => {
+    if (!memberToRemove) return;
+    try {
+      await removeMember(memberToRemove.user_id);
+      toast.success("Member removed from organization");
+      setMemberToRemove(null);
+      loadMembers();
+    } catch (error: any) {
+      toast.error(error.message || "Failed to remove member");
+    }
+  };
+
   const pendingInvites = invites.filter(i => !i.accepted_at && new Date(i.expires_at) > new Date());
+
+  const getInitials = (name: string | null, email: string | null) => {
+    if (name) {
+      return name.split(' ').map(n => n[0]).join('').toUpperCase();
+    }
+    return email?.[0]?.toUpperCase() || '?';
+  };
 
   return (
     <div className="rounded-xl border bg-card">
@@ -218,29 +283,98 @@ export function TeamManagement() {
 
       {/* Team Members */}
       <div className="divide-y">
-        {teamMembers.map((member) => (
-          <div key={member.id} className="flex items-center justify-between p-6">
-            <div className="flex items-center gap-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-muted text-sm font-semibold text-primary">
-                {member.name.split(' ').map(n => n[0]).join('')}
-              </div>
-              <div>
-                <div className="font-medium">{member.name}</div>
-                <div className="text-sm text-muted-foreground">{member.email}</div>
-              </div>
-            </div>
-            <div className="flex items-center gap-4">
-              <Badge variant={member.status === "active" ? "success" : "warning"}>
-                {member.status}
-              </Badge>
-              <Badge variant="secondary">{member.role}</Badge>
-              <Button variant="ghost" size="icon-sm">
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
+        {membersLoading ? (
+          <div className="flex items-center justify-center p-6">
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
           </div>
-        ))}
+        ) : members.length === 0 ? (
+          <div className="p-6 text-center text-muted-foreground">
+            No team members found
+          </div>
+        ) : (
+          members.map((member) => {
+            const isCurrentUser = member.user_id === user?.id;
+            return (
+              <div key={member.user_id} className="flex items-center justify-between p-6">
+                <div className="flex items-center gap-4">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-muted text-sm font-semibold text-primary">
+                    {getInitials(member.full_name, member.email)}
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium">{member.full_name || 'Unnamed'}</span>
+                      {isCurrentUser && (
+                        <Badge variant="outline" className="text-xs">You</Badge>
+                      )}
+                    </div>
+                    <div className="text-sm text-muted-foreground">{member.email}</div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-4">
+                  <Badge variant="success">Active</Badge>
+                  <Badge variant="secondary">{roleLabels[member.role]}</Badge>
+                  
+                  {isSuperAdmin && !isCurrentUser && (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon-sm">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="bg-popover">
+                        <DropdownMenuItem 
+                          onClick={() => handleRoleChange(member, 'admin')}
+                          disabled={member.role === 'admin'}
+                        >
+                          Make Admin
+                        </DropdownMenuItem>
+                        <DropdownMenuItem 
+                          onClick={() => handleRoleChange(member, 'manager')}
+                          disabled={member.role === 'manager'}
+                        >
+                          Make Manager
+                        </DropdownMenuItem>
+                        <DropdownMenuItem 
+                          onClick={() => handleRoleChange(member, 'agent')}
+                          disabled={member.role === 'agent'}
+                        >
+                          Make Agent
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem 
+                          className="text-destructive"
+                          onClick={() => setMemberToRemove(member)}
+                        >
+                          Remove from Organization
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  )}
+                </div>
+              </div>
+            );
+          })
+        )}
       </div>
+
+      {/* Remove Member Confirmation */}
+      <AlertDialog open={!!memberToRemove} onOpenChange={(open) => !open && setMemberToRemove(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove Team Member</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to remove {memberToRemove?.full_name || memberToRemove?.email} from the organization? 
+              They will lose access to all organization resources.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleRemoveMember} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Remove
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
