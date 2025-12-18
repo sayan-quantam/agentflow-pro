@@ -4,11 +4,12 @@ import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { Phone, Loader2 } from 'lucide-react';
+import { Phone, Loader2, Sparkles, Shield, Zap, Users } from 'lucide-react';
 import { z } from 'zod';
+import { BackgroundAnimation } from '@/components/ui/BackgroundAnimation';
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -24,6 +25,12 @@ const signupSchema = z.object({
   message: "Passwords don't match",
   path: ['confirmPassword'],
 });
+
+const features = [
+  { icon: Zap, text: 'AI-Powered Calls' },
+  { icon: Shield, text: 'Enterprise Security' },
+  { icon: Users, text: 'Team Collaboration' },
+];
 
 export default function Auth() {
   const [isLoading, setIsLoading] = useState(false);
@@ -131,25 +138,54 @@ export default function Auth() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/30 p-4">
-      <div className="w-full max-w-md space-y-6">
+    <div className="min-h-screen flex items-center justify-center bg-background p-4 relative overflow-hidden">
+      {/* Background Animation */}
+      <BackgroundAnimation variant="gradient" />
+      
+      {/* Grid overlay */}
+      <div className="absolute inset-0 bg-grid opacity-30 pointer-events-none" />
+      
+      <div className="w-full max-w-md space-y-8 relative z-10 animate-fade-in-up">
         {/* Logo/Brand */}
-        <div className="text-center space-y-2">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-primary text-primary-foreground mb-2">
-            <Phone className="h-6 w-6" />
+        <div className="text-center space-y-4">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-accent shadow-xl shadow-primary/30 mb-4">
+            <Phone className="h-8 w-8 text-primary-foreground" />
           </div>
-          <h1 className="text-2xl font-bold tracking-tight">CallFlow AI</h1>
-          <p className="text-muted-foreground text-sm">
-            Enterprise AI Calling Agent Platform
-          </p>
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight flex items-center justify-center gap-2">
+              CallFlow 
+              <span className="text-gradient-accent">AI</span>
+            </h1>
+            <p className="text-muted-foreground text-sm mt-2">
+              Enterprise AI Calling Agent Platform
+            </p>
+          </div>
+          
+          {/* Feature badges */}
+          <div className="flex items-center justify-center gap-3 pt-2">
+            {features.map((feature, index) => (
+              <div 
+                key={feature.text}
+                className="flex items-center gap-1.5 text-xs text-muted-foreground bg-muted/50 px-3 py-1.5 rounded-full border border-border/50"
+                style={{ animationDelay: `${index * 100}ms` }}
+              >
+                <feature.icon className="h-3 w-3 text-primary" />
+                {feature.text}
+              </div>
+            ))}
+          </div>
         </div>
 
-        <Card className="border-border/50 shadow-lg">
+        <Card className="border-border/50 shadow-2xl bg-card/90 backdrop-blur-xl">
           <Tabs defaultValue="login" className="w-full">
             <CardHeader className="pb-4">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="login">Login</TabsTrigger>
-                <TabsTrigger value="signup">Sign Up</TabsTrigger>
+              <TabsList className="grid w-full grid-cols-2 bg-muted/50 p-1 rounded-xl">
+                <TabsTrigger value="login" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                  Login
+                </TabsTrigger>
+                <TabsTrigger value="signup" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                  Sign Up
+                </TabsTrigger>
               </TabsList>
             </CardHeader>
 
@@ -157,7 +193,7 @@ export default function Auth() {
               <TabsContent value="login" className="mt-0">
                 <form onSubmit={handleLogin} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="login-email">Email</Label>
+                    <Label htmlFor="login-email" className="text-sm font-medium">Email</Label>
                     <Input
                       id="login-email"
                       type="email"
@@ -165,13 +201,14 @@ export default function Auth() {
                       value={loginEmail}
                       onChange={(e) => setLoginEmail(e.target.value)}
                       disabled={isLoading}
+                      className="bg-muted/50 border-border/50 rounded-xl focus:border-primary/50 focus:ring-2 focus:ring-primary/20"
                     />
                     {errors.login_email && (
                       <p className="text-sm text-destructive">{errors.login_email}</p>
                     )}
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="login-password">Password</Label>
+                    <Label htmlFor="login-password" className="text-sm font-medium">Password</Label>
                     <Input
                       id="login-password"
                       type="password"
@@ -179,19 +216,23 @@ export default function Auth() {
                       value={loginPassword}
                       onChange={(e) => setLoginPassword(e.target.value)}
                       disabled={isLoading}
+                      className="bg-muted/50 border-border/50 rounded-xl focus:border-primary/50 focus:ring-2 focus:ring-primary/20"
                     />
                     {errors.login_password && (
                       <p className="text-sm text-destructive">{errors.login_password}</p>
                     )}
                   </div>
-                  <Button type="submit" className="w-full" disabled={isLoading}>
+                  <Button type="submit" className="w-full rounded-xl h-11" variant="premium" disabled={isLoading}>
                     {isLoading ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                         Signing in...
                       </>
                     ) : (
-                      'Sign In'
+                      <>
+                        <Sparkles className="mr-2 h-4 w-4" />
+                        Sign In
+                      </>
                     )}
                   </Button>
                 </form>
@@ -200,7 +241,7 @@ export default function Auth() {
               <TabsContent value="signup" className="mt-0">
                 <form onSubmit={handleSignup} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="signup-name">Full Name</Label>
+                    <Label htmlFor="signup-name" className="text-sm font-medium">Full Name</Label>
                     <Input
                       id="signup-name"
                       type="text"
@@ -208,13 +249,14 @@ export default function Auth() {
                       value={signupName}
                       onChange={(e) => setSignupName(e.target.value)}
                       disabled={isLoading}
+                      className="bg-muted/50 border-border/50 rounded-xl focus:border-primary/50 focus:ring-2 focus:ring-primary/20"
                     />
                     {errors.signup_fullName && (
                       <p className="text-sm text-destructive">{errors.signup_fullName}</p>
                     )}
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="signup-email">Email</Label>
+                    <Label htmlFor="signup-email" className="text-sm font-medium">Email</Label>
                     <Input
                       id="signup-email"
                       type="email"
@@ -222,13 +264,14 @@ export default function Auth() {
                       value={signupEmail}
                       onChange={(e) => setSignupEmail(e.target.value)}
                       disabled={isLoading}
+                      className="bg-muted/50 border-border/50 rounded-xl focus:border-primary/50 focus:ring-2 focus:ring-primary/20"
                     />
                     {errors.signup_email && (
                       <p className="text-sm text-destructive">{errors.signup_email}</p>
                     )}
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="signup-password">Password</Label>
+                    <Label htmlFor="signup-password" className="text-sm font-medium">Password</Label>
                     <Input
                       id="signup-password"
                       type="password"
@@ -236,13 +279,14 @@ export default function Auth() {
                       value={signupPassword}
                       onChange={(e) => setSignupPassword(e.target.value)}
                       disabled={isLoading}
+                      className="bg-muted/50 border-border/50 rounded-xl focus:border-primary/50 focus:ring-2 focus:ring-primary/20"
                     />
                     {errors.signup_password && (
                       <p className="text-sm text-destructive">{errors.signup_password}</p>
                     )}
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="signup-confirm">Confirm Password</Label>
+                    <Label htmlFor="signup-confirm" className="text-sm font-medium">Confirm Password</Label>
                     <Input
                       id="signup-confirm"
                       type="password"
@@ -250,19 +294,23 @@ export default function Auth() {
                       value={signupConfirmPassword}
                       onChange={(e) => setSignupConfirmPassword(e.target.value)}
                       disabled={isLoading}
+                      className="bg-muted/50 border-border/50 rounded-xl focus:border-primary/50 focus:ring-2 focus:ring-primary/20"
                     />
                     {errors.signup_confirmPassword && (
                       <p className="text-sm text-destructive">{errors.signup_confirmPassword}</p>
                     )}
                   </div>
-                  <Button type="submit" className="w-full" disabled={isLoading}>
+                  <Button type="submit" className="w-full rounded-xl h-11" variant="premium" disabled={isLoading}>
                     {isLoading ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                         Creating account...
                       </>
                     ) : (
-                      'Create Account'
+                      <>
+                        <Sparkles className="mr-2 h-4 w-4" />
+                        Create Account
+                      </>
                     )}
                   </Button>
                 </form>
