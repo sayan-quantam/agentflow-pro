@@ -3,26 +3,36 @@ import {
   Plus, 
   Search, 
   Filter,
-  MoreHorizontal,
   Play,
   Pause,
-  StopCircle,
   BarChart2,
   Calendar,
   Users,
   Phone,
   Clock,
   CheckCircle2,
-  XCircle,
-  ChevronRight
+  ChevronRight,
+  Trash2,
+  MoreHorizontal
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
+import { CreateCampaignDialog } from "@/components/dialogs/CreateCampaignDialog";
+import { ConfirmDialog } from "@/components/dialogs/ConfirmDialog";
 
-const campaigns = [
+const initialCampaigns = [
   {
     id: 1,
     name: "Q4 Sales Outreach",
@@ -108,11 +118,54 @@ const statusConfig = {
 };
 
 export default function Campaigns() {
+  const navigate = useNavigate();
   const [filter, setFilter] = useState("all");
+  const [campaigns, setCampaigns] = useState(initialCampaigns);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [selectedCampaign, setSelectedCampaign] = useState<typeof campaigns[0] | null>(null);
 
-  const filteredCampaigns = filter === "all" 
-    ? campaigns 
-    : campaigns.filter(c => c.status === filter);
+  const filteredCampaigns = campaigns
+    .filter(c => filter === "all" || c.status === filter)
+    .filter(c => 
+      c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      c.agent.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+  const handleToggleStatus = (campaign: typeof campaigns[0]) => {
+    setCampaigns(prev => prev.map(c => {
+      if (c.id === campaign.id) {
+        const newStatus = c.status === "active" ? "paused" : "active";
+        toast.success(`Campaign "${c.name}" ${newStatus === "active" ? "resumed" : "paused"}`);
+        return { ...c, status: newStatus };
+      }
+      return c;
+    }));
+  };
+
+  const handleViewAnalytics = (campaign: typeof campaigns[0]) => {
+    toast.info(`Viewing analytics for "${campaign.name}"`);
+    navigate(`/analytics?campaign=${campaign.id}`);
+  };
+
+  const handleViewDetails = (campaign: typeof campaigns[0]) => {
+    toast.info(`Opening details for "${campaign.name}"`);
+  };
+
+  const handleDeleteCampaign = (campaign: typeof campaigns[0]) => {
+    setSelectedCampaign(campaign);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDeleteCampaign = () => {
+    if (selectedCampaign) {
+      setCampaigns(prev => prev.filter(c => c.id !== selectedCampaign.id));
+      toast.success(`Campaign "${selectedCampaign.name}" deleted`);
+      setDeleteDialogOpen(false);
+      setSelectedCampaign(null);
+    }
+  };
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -124,7 +177,7 @@ export default function Campaigns() {
             Manage and monitor your AI calling campaigns.
           </p>
         </div>
-        <Button>
+        <Button onClick={() => setCreateDialogOpen(true)}>
           <Plus className="h-4 w-4" />
           Create Campaign
         </Button>
@@ -184,11 +237,28 @@ export default function Campaigns() {
       <div className="flex gap-3">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input placeholder="Search campaigns..." className="pl-9" />
+          <Input 
+            placeholder="Search campaigns..." 
+            className="pl-9"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
         </div>
-        <Button variant="outline" size="icon">
-          <Filter className="h-4 w-4" />
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="icon">
+              <Filter className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => setFilter("all")}>All Campaigns</DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => setFilter("active")}>Active Only</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setFilter("paused")}>Paused Only</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setFilter("scheduled")}>Scheduled Only</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setFilter("completed")}>Completed Only</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {/* Campaigns List */}
@@ -256,27 +326,85 @@ export default function Campaigns() {
                 {/* Actions */}
                 <div className="flex items-center gap-2">
                   {campaign.status === "active" && (
-                    <Button variant="outline" size="icon-sm">
+                    <Button 
+                      variant="outline" 
+                      size="icon-sm"
+                      onClick={() => handleToggleStatus(campaign)}
+                    >
                       <Pause className="h-4 w-4" />
                     </Button>
                   )}
                   {campaign.status === "paused" && (
-                    <Button variant="outline" size="icon-sm">
+                    <Button 
+                      variant="outline" 
+                      size="icon-sm"
+                      onClick={() => handleToggleStatus(campaign)}
+                    >
                       <Play className="h-4 w-4" />
                     </Button>
                   )}
-                  <Button variant="outline" size="icon-sm">
+                  <Button 
+                    variant="outline" 
+                    size="icon-sm"
+                    onClick={() => handleViewAnalytics(campaign)}
+                  >
                     <BarChart2 className="h-4 w-4" />
                   </Button>
-                  <Button variant="ghost" size="icon-sm">
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon-sm">
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => handleViewDetails(campaign)}>
+                        <ChevronRight className="h-4 w-4 mr-2" />
+                        View Details
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleViewAnalytics(campaign)}>
+                        <BarChart2 className="h-4 w-4 mr-2" />
+                        Analytics
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem 
+                        className="text-destructive"
+                        onClick={() => handleDeleteCampaign(campaign)}
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               </div>
             </div>
           );
         })}
       </div>
+
+      {filteredCampaigns.length === 0 && (
+        <div className="text-center py-12">
+          <Phone className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+          <h3 className="font-semibold mb-1">No campaigns found</h3>
+          <p className="text-muted-foreground">Try adjusting your search or filters</p>
+        </div>
+      )}
+
+      {/* Dialogs */}
+      <CreateCampaignDialog
+        open={createDialogOpen}
+        onOpenChange={setCreateDialogOpen}
+      />
+
+      <ConfirmDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        title="Delete Campaign"
+        description={`Are you sure you want to delete "${selectedCampaign?.name}"? This action cannot be undone.`}
+        confirmText="Delete"
+        onConfirm={confirmDeleteCampaign}
+        variant="destructive"
+      />
     </div>
   );
 }
