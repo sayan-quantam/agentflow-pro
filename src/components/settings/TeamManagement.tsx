@@ -72,7 +72,7 @@ export function TeamManagement() {
       const invite = await createInvite(inviteEmail, inviteRole);
       
       // Generate invite link
-      const inviteLink = `${window.location.origin}/onboarding?invite=${invite.token}`;
+      const inviteLink = `${window.location.origin}/invite?token=${invite.token}`;
       
       // Copy to clipboard
       await navigator.clipboard.writeText(inviteLink);
@@ -91,7 +91,7 @@ export function TeamManagement() {
   };
 
   const handleCopyInviteLink = async (token: string) => {
-    const inviteLink = `${window.location.origin}/onboarding?invite=${token}`;
+    const inviteLink = `${window.location.origin}/invite?token=${token}`;
     await navigator.clipboard.writeText(inviteLink);
     toast.success("Invite link copied!");
   };

@@ -170,6 +170,16 @@ export type Database = {
         Returns: string
       }
       generate_slug: { Args: { name: string }; Returns: string }
+      get_invite_details: {
+        Args: { invite_token: string }
+        Returns: {
+          email: string
+          expires_at: string
+          is_valid: boolean
+          organization_name: string
+          role: Database["public"]["Enums"]["app_role"]
+        }[]
+      }
       get_user_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
