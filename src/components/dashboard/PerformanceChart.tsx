@@ -21,22 +21,22 @@ const data = [
 
 export function PerformanceChart() {
   return (
-    <div className="rounded-xl border bg-card p-6">
+    <div className="rounded-xl border border-border/50 bg-card/80 backdrop-blur-sm p-6 shadow-md">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h3 className="font-semibold">Call Performance</h3>
+          <h3 className="font-semibold text-lg">Call Performance</h3>
           <p className="text-sm text-muted-foreground">Weekly call volume trends</p>
         </div>
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
-            <div className="h-3 w-3 rounded-full bg-primary" />
+            <div className="h-3 w-3 rounded-full bg-primary shadow-[0_0_8px_hsl(217_91%_60%/0.5)]" />
             <span className="text-sm text-muted-foreground">Outbound</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="h-3 w-3 rounded-full bg-success" />
+            <div className="h-3 w-3 rounded-full bg-success shadow-[0_0_8px_hsl(160_84%_45%/0.5)]" />
             <span className="text-sm text-muted-foreground">Inbound</span>
           </div>
-          <button className="rounded-lg p-2 text-muted-foreground hover:bg-accent hover:text-foreground">
+          <button className="rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
             <MoreHorizontal className="h-5 w-5" />
           </button>
         </div>
@@ -46,35 +46,37 @@ export function PerformanceChart() {
           <AreaChart data={data}>
             <defs>
               <linearGradient id="colorOutbound" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="hsl(217, 91%, 60%)" stopOpacity={0.3} />
+                <stop offset="5%" stopColor="hsl(217, 91%, 60%)" stopOpacity={0.4} />
                 <stop offset="95%" stopColor="hsl(217, 91%, 60%)" stopOpacity={0} />
               </linearGradient>
               <linearGradient id="colorInbound" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="hsl(158, 64%, 52%)" stopOpacity={0.3} />
-                <stop offset="95%" stopColor="hsl(158, 64%, 52%)" stopOpacity={0} />
+                <stop offset="5%" stopColor="hsl(160, 84%, 45%)" stopOpacity={0.4} />
+                <stop offset="95%" stopColor="hsl(160, 84%, 45%)" stopOpacity={0} />
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 13%, 91%)" />
+            <CartesianGrid strokeDasharray="3 3" stroke="hsl(215, 20%, 18%)" />
             <XAxis 
               dataKey="name" 
-              stroke="hsl(220, 9%, 46%)" 
+              stroke="hsl(215, 20%, 45%)" 
               fontSize={12}
               tickLine={false}
               axisLine={false}
             />
             <YAxis 
-              stroke="hsl(220, 9%, 46%)" 
+              stroke="hsl(215, 20%, 45%)" 
               fontSize={12}
               tickLine={false}
               axisLine={false}
             />
             <Tooltip
               contentStyle={{
-                backgroundColor: "hsl(0, 0%, 100%)",
-                border: "1px solid hsl(220, 13%, 91%)",
-                borderRadius: "8px",
-                boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
+                backgroundColor: "hsl(222, 47%, 11%)",
+                border: "1px solid hsl(215, 20%, 18%)",
+                borderRadius: "12px",
+                boxShadow: "0 10px 25px -5px rgb(0 0 0 / 0.4)",
               }}
+              labelStyle={{ color: "hsl(210, 40%, 98%)" }}
+              itemStyle={{ color: "hsl(210, 40%, 98%)" }}
             />
             <Area
               type="monotone"
@@ -87,7 +89,7 @@ export function PerformanceChart() {
             <Area
               type="monotone"
               dataKey="inbound"
-              stroke="hsl(158, 64%, 52%)"
+              stroke="hsl(160, 84%, 45%)"
               strokeWidth={2}
               fillOpacity={1}
               fill="url(#colorInbound)"
