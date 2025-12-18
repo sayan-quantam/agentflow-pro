@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   Building2, 
   Users, 
@@ -11,7 +11,9 @@ import {
   Shield,
   Globe,
   Mail,
-  Phone as PhoneIcon
+  Phone as PhoneIcon,
+  Lock,
+  LucideIcon
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,8 +21,16 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { usePermissions } from "@/hooks/usePermissions";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
-const tabs = [
+interface Tab {
+  id: string;
+  label: string;
+  icon: LucideIcon;
+}
+
+const allTabs: Tab[] = [
   { id: "organization", label: "Organization", icon: Building2 },
   { id: "team", label: "Team Members", icon: Users },
   { id: "integrations", label: "Integrations", icon: Plug },
@@ -44,7 +54,18 @@ const integrations = [
 ];
 
 export default function Settings() {
-  const [activeTab, setActiveTab] = useState("organization");
+  const { canAccessSettingsTab, getAccessibleSettingsTabs, role } = usePermissions();
+  const accessibleTabs = getAccessibleSettingsTabs(allTabs);
+  const [activeTab, setActiveTab] = useState(accessibleTabs[0]?.id || "notifications");
+
+  // Reset to first accessible tab when role changes
+  useEffect(() => {
+    if (accessibleTabs.length > 0 && !accessibleTabs.find(t => t.id === activeTab)) {
+      setActiveTab(accessibleTabs[0].id);
+    }
+  }, [accessibleTabs, activeTab]);
+
+  const isTabRestricted = (tabId: string) => !canAccessSettingsTab(tabId);
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -59,26 +80,49 @@ export default function Settings() {
       <div className="flex flex-col gap-6 lg:flex-row">
         {/* Sidebar Navigation */}
         <nav className="lg:w-64 space-y-1">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={cn(
-                "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
-                activeTab === tab.id
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
-              )}
-            >
-              <tab.icon className="h-5 w-5" />
-              {tab.label}
-            </button>
-          ))}
+          {allTabs.map((tab) => {
+            const restricted = isTabRestricted(tab.id);
+            
+            if (restricted) {
+              return (
+                <Tooltip key={tab.id}>
+                  <TooltipTrigger asChild>
+                    <div
+                      className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground/50 cursor-not-allowed"
+                    >
+                      <tab.icon className="h-5 w-5" />
+                      {tab.label}
+                      <Lock className="h-3 w-3 ml-auto" />
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent side="right">
+                    <p>You don't have permission to access this section</p>
+                  </TooltipContent>
+                </Tooltip>
+              );
+            }
+
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={cn(
+                  "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                  activeTab === tab.id
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                )}
+              >
+                <tab.icon className="h-5 w-5" />
+                {tab.label}
+              </button>
+            );
+          })}
         </nav>
 
         {/* Content */}
         <div className="flex-1">
-          {activeTab === "organization" && (
+          {activeTab === "organization" && canAccessSettingsTab("organization") && (
             <div className="space-y-6">
               <div className="rounded-xl border bg-card p-6">
                 <h3 className="font-semibold mb-6">Organization Profile</h3>
@@ -142,7 +186,7 @@ export default function Settings() {
             </div>
           )}
 
-          {activeTab === "team" && (
+          {activeTab === "team" && canAccessSettingsTab("team") && (
             <div className="rounded-xl border bg-card">
               <div className="flex items-center justify-between border-b p-6">
                 <div>
@@ -178,7 +222,7 @@ export default function Settings() {
             </div>
           )}
 
-          {activeTab === "integrations" && (
+          {activeTab === "integrations" && canAccessSettingsTab("integrations") && (
             <div className="space-y-4">
               {integrations.map((integration) => (
                 <div key={integration.id} className="flex items-center justify-between rounded-xl border bg-card p-6">
@@ -204,7 +248,7 @@ export default function Settings() {
             </div>
           )}
 
-          {activeTab === "api" && (
+          {activeTab === "api" && canAccessSettingsTab("api") && (
             <div className="rounded-xl border bg-card p-6">
               <h3 className="font-semibold mb-6">API Keys</h3>
               <div className="space-y-4">
@@ -241,7 +285,7 @@ export default function Settings() {
             </div>
           )}
 
-          {activeTab === "notifications" && (
+          {activeTab === "notifications" && canAccessSettingsTab("notifications") && (
             <div className="rounded-xl border bg-card p-6">
               <h3 className="font-semibold mb-6">Notification Preferences</h3>
               <div className="space-y-6">
@@ -277,7 +321,7 @@ export default function Settings() {
             </div>
           )}
 
-          {activeTab === "billing" && (
+          {activeTab === "billing" && canAccessSettingsTab("billing") && (
             <div className="space-y-6">
               <div className="rounded-xl border bg-card p-6">
                 <div className="flex items-center justify-between mb-6">

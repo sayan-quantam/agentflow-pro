@@ -9,16 +9,25 @@ import {
   Settings, 
   ChevronLeft,
   Phone,
-  Zap
+  Zap,
+  LucideIcon
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/useAuth";
+import { usePermissions } from "@/hooks/usePermissions";
 
 interface SidebarProps {
   collapsed: boolean;
   onToggle: () => void;
 }
 
-const navigation = [
+interface NavItem {
+  name: string;
+  href: string;
+  icon: LucideIcon;
+}
+
+const navigation: NavItem[] = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
   { name: "AI Agents", href: "/agents", icon: Bot },
   { name: "Campaigns", href: "/campaigns", icon: Megaphone },
@@ -28,8 +37,29 @@ const navigation = [
   { name: "Settings", href: "/settings", icon: Settings },
 ];
 
+const roleLabels: Record<string, string> = {
+  super_admin: 'Super Admin',
+  admin: 'Admin',
+  manager: 'Manager',
+  agent: 'Agent',
+};
+
 export function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const location = useLocation();
+  const { user, role } = useAuth();
+  const { getAccessibleNavItems } = usePermissions();
+
+  const accessibleNavigation = getAccessibleNavItems(navigation);
+
+  // Get user initials from email or name
+  const getUserInitials = () => {
+    if (!user?.email) return '??';
+    const parts = user.email.split('@')[0].split(/[._-]/);
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[1][0]).toUpperCase();
+    }
+    return user.email.slice(0, 2).toUpperCase();
+  };
 
   return (
     <aside
@@ -64,7 +94,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
 
       {/* Navigation */}
       <nav className="flex-1 space-y-1 px-3 py-4">
-        {navigation.map((item) => {
+        {accessibleNavigation.map((item) => {
           const isActive = location.pathname === item.href;
           return (
             <NavLink
@@ -96,12 +126,16 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
       <div className="border-t border-sidebar-border p-4">
         <div className={cn("flex items-center gap-3", collapsed && "justify-center")}>
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-sidebar-accent text-sm font-medium text-sidebar-foreground">
-            JD
+            {getUserInitials()}
           </div>
           {!collapsed && (
             <div className="flex flex-col">
-              <span className="text-sm font-medium text-sidebar-foreground">John Doe</span>
-              <span className="text-xs text-sidebar-muted">Admin</span>
+              <span className="text-sm font-medium text-sidebar-foreground truncate max-w-[140px]">
+                {user?.email?.split('@')[0] || 'User'}
+              </span>
+              <span className="text-xs text-sidebar-muted">
+                {role ? roleLabels[role] : 'Loading...'}
+              </span>
             </div>
           )}
         </div>
