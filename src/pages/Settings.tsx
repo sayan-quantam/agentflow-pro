@@ -22,7 +22,10 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { usePermissions } from "@/hooks/usePermissions";
+import { useOrganization } from "@/hooks/useOrganization";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { TeamManagement } from "@/components/settings/TeamManagement";
+import { toast } from "sonner";
 
 interface Tab {
   id: string;
@@ -39,13 +42,6 @@ const allTabs: Tab[] = [
   { id: "billing", label: "Billing", icon: CreditCard },
 ];
 
-const teamMembers = [
-  { id: 1, name: "John Doe", email: "john@company.com", role: "Admin", status: "active" },
-  { id: 2, name: "Sarah Smith", email: "sarah@company.com", role: "Manager", status: "active" },
-  { id: 3, name: "Mike Johnson", email: "mike@company.com", role: "Agent", status: "active" },
-  { id: 4, name: "Emily Davis", email: "emily@company.com", role: "Agent", status: "pending" },
-];
-
 const integrations = [
   { id: "twilio", name: "Twilio", description: "Voice and SMS provider", status: "connected", icon: PhoneIcon },
   { id: "salesforce", name: "Salesforce", description: "CRM integration", status: "available", icon: Globe },
@@ -54,16 +50,23 @@ const integrations = [
 ];
 
 export default function Settings() {
-  const { canAccessSettingsTab, getAccessibleSettingsTabs, role } = usePermissions();
+  const { canAccessSettingsTab, getAccessibleSettingsTabs } = usePermissions();
+  const { organization, updateOrganization } = useOrganization();
   const accessibleTabs = getAccessibleSettingsTabs(allTabs);
   const [activeTab, setActiveTab] = useState(accessibleTabs[0]?.id || "notifications");
+  const [orgName, setOrgName] = useState("");
+  const [orgIndustry, setOrgIndustry] = useState("");
+  const [orgWebsite, setOrgWebsite] = useState("");
+  const [saving, setSaving] = useState(false);
 
-  // Reset to first accessible tab when role changes
+  // Populate org fields when organization loads
   useEffect(() => {
-    if (accessibleTabs.length > 0 && !accessibleTabs.find(t => t.id === activeTab)) {
-      setActiveTab(accessibleTabs[0].id);
+    if (organization) {
+      setOrgName(organization.name || "");
+      setOrgIndustry(organization.industry || "");
+      setOrgWebsite(organization.website || "");
     }
-  }, [accessibleTabs, activeTab]);
+  }, [organization]);
 
   const isTabRestricted = (tabId: string) => !canAccessSettingsTab(tabId);
 
@@ -129,7 +132,7 @@ export default function Settings() {
                 <div className="space-y-6">
                   <div className="flex items-center gap-6">
                     <div className="flex h-20 w-20 items-center justify-center rounded-xl bg-primary-muted text-2xl font-bold text-primary">
-                      CF
+                      {organization?.name?.slice(0, 2).toUpperCase() || "CO"}
                     </div>
                     <Button variant="outline">
                       <Upload className="h-4 w-4" />
@@ -139,22 +142,55 @@ export default function Settings() {
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div className="space-y-2">
                       <Label htmlFor="company">Company Name</Label>
-                      <Input id="company" defaultValue="CallFlow Technologies" />
+                      <Input 
+                        id="company" 
+                        value={orgName}
+                        onChange={(e) => setOrgName(e.target.value)}
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="industry">Industry</Label>
-                      <Input id="industry" defaultValue="Technology" />
+                      <Input 
+                        id="industry" 
+                        value={orgIndustry}
+                        onChange={(e) => setOrgIndustry(e.target.value)}
+                        placeholder="Technology, Healthcare, etc."
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="website">Website</Label>
-                      <Input id="website" defaultValue="https://callflow.io" />
+                      <Input 
+                        id="website" 
+                        value={orgWebsite}
+                        onChange={(e) => setOrgWebsite(e.target.value)}
+                        placeholder="https://example.com"
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="timezone">Timezone</Label>
                       <Input id="timezone" defaultValue="America/New_York (EST)" />
                     </div>
                   </div>
-                  <Button>Save Changes</Button>
+                  <Button 
+                    disabled={saving}
+                    onClick={async () => {
+                      setSaving(true);
+                      try {
+                        await updateOrganization({
+                          name: orgName,
+                          industry: orgIndustry || null,
+                          website: orgWebsite || null,
+                        });
+                        toast.success("Organization updated");
+                      } catch (error) {
+                        toast.error("Failed to update organization");
+                      } finally {
+                        setSaving(false);
+                      }
+                    }}
+                  >
+                    {saving ? "Saving..." : "Save Changes"}
+                  </Button>
                 </div>
               </div>
 
@@ -187,39 +223,7 @@ export default function Settings() {
           )}
 
           {activeTab === "team" && canAccessSettingsTab("team") && (
-            <div className="rounded-xl border bg-card">
-              <div className="flex items-center justify-between border-b p-6">
-                <div>
-                  <h3 className="font-semibold">Team Members</h3>
-                  <p className="text-sm text-muted-foreground">Manage your team and permissions</p>
-                </div>
-                <Button>Invite Member</Button>
-              </div>
-              <div className="divide-y">
-                {teamMembers.map((member) => (
-                  <div key={member.id} className="flex items-center justify-between p-6">
-                    <div className="flex items-center gap-4">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-muted text-sm font-semibold text-primary">
-                        {member.name.split(' ').map(n => n[0]).join('')}
-                      </div>
-                      <div>
-                        <div className="font-medium">{member.name}</div>
-                        <div className="text-sm text-muted-foreground">{member.email}</div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <Badge variant={member.status === "active" ? "success" : "warning"}>
-                        {member.status}
-                      </Badge>
-                      <Badge variant="secondary">{member.role}</Badge>
-                      <Button variant="ghost" size="icon-sm">
-                        <ChevronRight className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <TeamManagement />
           )}
 
           {activeTab === "integrations" && canAccessSettingsTab("integrations") && (

@@ -14,6 +14,7 @@ import Calendar from "@/pages/Calendar";
 import Analytics from "@/pages/Analytics";
 import Settings from "@/pages/Settings";
 import Auth from "@/pages/Auth";
+import Onboarding from "@/pages/Onboarding";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -26,10 +27,15 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
-            {/* Public route */}
+            {/* Public routes */}
             <Route path="/auth" element={<Auth />} />
             
-            {/* Protected routes - All authenticated users */}
+            {/* Onboarding - requires auth but no org check */}
+            <Route element={<ProtectedRoute skipOrgCheck />}>
+              <Route path="/onboarding" element={<Onboarding />} />
+            </Route>
+            
+            {/* Protected routes - All authenticated users with organization */}
             <Route element={<ProtectedRoute />}>
               <Route element={<AppLayout />}>
                 <Route path="/" element={<Dashboard />} />
