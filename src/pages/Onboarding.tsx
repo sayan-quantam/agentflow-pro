@@ -20,6 +20,7 @@ const orgSchema = z.object({
 const profileSchema = z.object({
   fullName: z.string().min(2, "Name must be at least 2 characters").max(100),
   username: z.string().min(3, "Username must be at least 3 characters").max(50).regex(/^[a-zA-Z0-9_]+$/, "Username can only contain letters, numbers, and underscores"),
+  email: z.string().email("Please enter a valid email"),
 });
 
 type Plan = "starter" | "professional" | "enterprise";
@@ -64,6 +65,7 @@ export default function Onboarding() {
   const [profileData, setProfileData] = useState({
     fullName: user?.user_metadata?.full_name || "",
     username: "",
+    email: user?.email || "",
   });
   const [selectedPlan, setSelectedPlan] = useState<Plan>("starter");
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -109,6 +111,7 @@ export default function Onboarding() {
           .from('profiles')
           .update({ 
             full_name: profileData.fullName,
+            email: profileData.email,
           })
           .eq('user_id', user.id);
 
@@ -318,14 +321,15 @@ export default function Onboarding() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">Email *</Label>
                 <Input
                   id="email"
-                  value={user?.email || ""}
-                  disabled
-                  className="bg-muted"
+                  type="email"
+                  placeholder="admin@company.com"
+                  value={profileData.email}
+                  onChange={(e) => setProfileData({ ...profileData, email: e.target.value })}
                 />
-                <p className="text-xs text-muted-foreground">This is your login email</p>
+                {errors.email && <p className="text-sm text-destructive">{errors.email}</p>}
               </div>
 
               <div className="space-y-2">
