@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { 
   TrendingUp, 
   TrendingDown,
@@ -7,8 +8,7 @@ import {
   Clock,
   CheckCircle2,
   XCircle,
-  Download,
-  Calendar
+  Download
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { 
@@ -26,6 +26,8 @@ import {
   Cell
 } from "recharts";
 import { cn } from "@/lib/utils";
+import { DateRangePicker } from "@/components/dialogs/DateRangePicker";
+import { ExportDialog } from "@/components/dialogs/ExportDialog";
 
 const callVolumeData = [
   { date: "Dec 1", outbound: 420, inbound: 180 },
@@ -104,6 +106,14 @@ const metrics = [
 ];
 
 export default function Analytics() {
+  const [dateRange, setDateRange] = useState("Last 14 days");
+  const [exportDialogOpen, setExportDialogOpen] = useState(false);
+
+  const handleDateRangeChange = (value: string, startDate: Date, endDate: Date) => {
+    setDateRange(value);
+    // In a real app, you would fetch data for the selected range
+  };
+
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Page Header */}
@@ -115,11 +125,8 @@ export default function Analytics() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline">
-            <Calendar className="h-4 w-4" />
-            Last 14 days
-          </Button>
-          <Button variant="outline">
+          <DateRangePicker value={dateRange} onChange={handleDateRangeChange} />
+          <Button variant="outline" onClick={() => setExportDialogOpen(true)}>
             <Download className="h-4 w-4" />
             Export
           </Button>
@@ -300,6 +307,13 @@ export default function Analytics() {
           </div>
         </div>
       </div>
+
+      {/* Export Dialog */}
+      <ExportDialog
+        open={exportDialogOpen}
+        onOpenChange={setExportDialogOpen}
+        type="analytics"
+      />
     </div>
   );
 }

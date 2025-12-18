@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { 
   ChevronLeft, 
   ChevronRight, 
@@ -10,17 +11,17 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
+import { ScheduleEventDialog } from "@/components/dialogs/ScheduleEventDialog";
 
 const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-const currentDate = new Date();
 
-// Generate calendar days
-const generateCalendarDays = () => {
-  const year = currentDate.getFullYear();
-  const month = currentDate.getMonth();
+// Generate calendar days for a specific month
+const generateCalendarDays = (year: number, month: number) => {
   const firstDay = new Date(year, month, 1).getDay();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const daysInPrevMonth = new Date(year, month, 0).getDate();
+  const today = new Date();
   
   const calendar = [];
   
@@ -29,6 +30,7 @@ const generateCalendarDays = () => {
     calendar.push({
       day: daysInPrevMonth - i,
       isCurrentMonth: false,
+      date: new Date(year, month - 1, daysInPrevMonth - i),
       events: [],
     });
   }
@@ -43,10 +45,15 @@ const generateCalendarDays = () => {
     if (i === 22) events.push({ title: "Demo Call - Acme Inc", type: "appointment", status: "confirmed" });
     if (i === 23) events.push({ title: "Feedback Survey", type: "campaign", status: "active" });
     
+    const isToday = i === today.getDate() && 
+                    month === today.getMonth() && 
+                    year === today.getFullYear();
+    
     calendar.push({
       day: i,
       isCurrentMonth: true,
-      isToday: i === currentDate.getDate(),
+      isToday,
+      date: new Date(year, month, i),
       events,
     });
   }
@@ -57,14 +64,13 @@ const generateCalendarDays = () => {
     calendar.push({
       day: i,
       isCurrentMonth: false,
+      date: new Date(year, month + 1, i),
       events: [],
     });
   }
   
   return calendar;
 };
-
-const calendarDays = generateCalendarDays();
 
 const upcomingEvents = [
   {
@@ -103,11 +109,44 @@ const eventTypeConfig = {
   callback: { color: "bg-warning", label: "Callback" },
 };
 
+const monthNames = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December"
+];
+
 export default function Calendar() {
-  const monthNames = [
-    "January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December"
-  ];
+  const today = new Date();
+  const [currentDate, setCurrentDate] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
+  const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
+
+  const calendarDays = generateCalendarDays(currentDate.getFullYear(), currentDate.getMonth());
+
+  const handlePrevMonth = () => {
+    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
+  };
+
+  const handleNextMonth = () => {
+    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
+  };
+
+  const handleToday = () => {
+    setCurrentDate(new Date(today.getFullYear(), today.getMonth(), 1));
+  };
+
+  const handleDayClick = (day: typeof calendarDays[0]) => {
+    if (!day.isCurrentMonth) {
+      // Navigate to that month
+      setCurrentDate(new Date(day.date.getFullYear(), day.date.getMonth(), 1));
+    } else {
+      setSelectedDate(day.date);
+      setScheduleDialogOpen(true);
+    }
+  };
+
+  const handleEventClick = (event: typeof upcomingEvents[0]) => {
+    toast.info(`Opening event: ${event.title}`);
+  };
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -119,7 +158,7 @@ export default function Calendar() {
             Schedule campaigns, appointments, and callbacks.
           </p>
         </div>
-        <Button>
+        <Button onClick={() => { setSelectedDate(undefined); setScheduleDialogOpen(true); }}>
           <Plus className="h-4 w-4" />
           Schedule Event
         </Button>
@@ -134,11 +173,13 @@ export default function Calendar() {
               {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
             </h2>
             <div className="flex items-center gap-2">
-              <Button variant="outline" size="icon-sm">
+              <Button variant="outline" size="icon-sm" onClick={handlePrevMonth}>
                 <ChevronLeft className="h-4 w-4" />
               </Button>
-              <Button variant="outline" size="sm">Today</Button>
-              <Button variant="outline" size="icon-sm">
+              <Button variant="outline" size="sm" onClick={handleToday}>
+                Today
+              </Button>
+              <Button variant="outline" size="icon-sm" onClick={handleNextMonth}>
                 <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
@@ -158,6 +199,7 @@ export default function Calendar() {
             {calendarDays.map((day, index) => (
               <div
                 key={index}
+                onClick={() => handleDayClick(day)}
                 className={cn(
                   "min-h-[100px] border-b border-r p-2 transition-colors",
                   !day.isCurrentMonth && "bg-muted/30",
@@ -178,8 +220,9 @@ export default function Calendar() {
                   {day.events?.slice(0, 2).map((event, eventIndex) => (
                     <div
                       key={eventIndex}
+                      onClick={(e) => { e.stopPropagation(); toast.info(`Opening: ${event.title}`); }}
                       className={cn(
-                        "truncate rounded px-1.5 py-0.5 text-xs text-primary-foreground",
+                        "truncate rounded px-1.5 py-0.5 text-xs text-primary-foreground cursor-pointer hover:opacity-80",
                         eventTypeConfig[event.type as keyof typeof eventTypeConfig].color
                       )}
                     >
@@ -208,7 +251,11 @@ export default function Calendar() {
               {upcomingEvents.map((event) => {
                 const config = eventTypeConfig[event.type as keyof typeof eventTypeConfig];
                 return (
-                  <div key={event.id} className="p-4 transition-colors hover:bg-muted/50">
+                  <div 
+                    key={event.id} 
+                    onClick={() => handleEventClick(event)}
+                    className="p-4 transition-colors hover:bg-muted/50 cursor-pointer"
+                  >
                     <div className="flex items-start gap-3">
                       <div className={cn("mt-1 h-2 w-2 rounded-full", config.color)} />
                       <div className="flex-1 min-w-0">
@@ -257,6 +304,13 @@ export default function Calendar() {
           </div>
         </div>
       </div>
+
+      {/* Schedule Event Dialog */}
+      <ScheduleEventDialog
+        open={scheduleDialogOpen}
+        onOpenChange={setScheduleDialogOpen}
+        defaultDate={selectedDate}
+      />
     </div>
   );
 }
