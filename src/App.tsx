@@ -15,6 +15,7 @@ import Analytics from "@/pages/Analytics";
 import Settings from "@/pages/Settings";
 import Auth from "@/pages/Auth";
 import Onboarding from "@/pages/Onboarding";
+import InviteAccept from "@/pages/InviteAccept";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -29,6 +30,7 @@ const App = () => (
           <Routes>
             {/* Public routes */}
             <Route path="/auth" element={<Auth />} />
+            <Route path="/invite" element={<InviteAccept />} />
             
             {/* Onboarding - requires auth but no org check */}
             <Route element={<ProtectedRoute skipOrgCheck />}>
